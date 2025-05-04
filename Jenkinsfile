@@ -28,6 +28,12 @@ pipeline {
             }
         }
 
+        stage('Verificar archivo JSON') {
+            steps {
+                sh 'cat azure_creds.json'
+            }
+        }
+
         stage('Terraform Init y Apply') {
             steps {
                 sh 'terraform init'
