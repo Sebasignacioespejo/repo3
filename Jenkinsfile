@@ -44,7 +44,7 @@ pipeline {
 
     post {
         always {
-            node('master') {
+            node {
                 sh '''
                     if [ -f azure_creds.json ]; then
                         rm azure_creds.json
