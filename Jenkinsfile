@@ -47,7 +47,7 @@ pipeline {
 
     post {
         always {
-            node {
+            node('any') { // Aquí agregamos el parámetro 'label'
                 sh '''
                     if [ -f azure_creds.json ]; then
                         rm azure_creds.json
