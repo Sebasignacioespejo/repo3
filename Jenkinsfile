@@ -28,12 +28,6 @@ pipeline {
             }
         }
 
-        stage('Verificar archivo JSON') {
-            steps {
-                sh 'cat azure_creds.json'
-            }
-        }
-
         stage('Terraform Init y Apply') {
             steps {
                 sh 'terraform init'
@@ -53,14 +47,16 @@ pipeline {
 
     post {
         always {
-            sh '''
-                if [ -f azure_creds.json ]; then
-                    rm azure_creds.json
-                    echo "Archivo azure_creds.json eliminado."
-                else
-                    echo "No se encontró azure_creds.json, nada que eliminar."
-                fi
-            '''
+            node {
+                sh '''
+                    if [ -f azure_creds.json ]; then
+                        rm azure_creds.json
+                        echo "Archivo azure_creds.json eliminado."
+                    else
+                        echo "No se encontró azure_creds.json, nada que eliminar."
+                    fi
+                '''
+            }
         }
     }
 }
