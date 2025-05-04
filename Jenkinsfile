@@ -10,7 +10,7 @@ pipeline {
             steps {
                 script {
                     // Cargar las credenciales de Azure desde el archivo JSON o los valores
-                    withCredentials([string(credentialsId: 'azure-credentials', variable: 'AZURE_CREDENTIALS')]) {
+                    withCredentials([string(credentialsId: 'jenkins-azure', variable: 'AZURE_CREDENTIALS')]) {
                         sh """
                             echo ${AZURE_CREDENTIALS} > azure_creds.json
                             export ARM_CLIENT_ID=$(jq -r .clientId azure_creds.json)
