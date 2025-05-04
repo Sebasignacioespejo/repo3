@@ -2,23 +2,27 @@ pipeline {
     agent any
 
     environment {
-        AZURE_CREDENTIALS = credentials('jenkins-azure')
+        TF_VAR_resource_group_name = 'rg-gogs'
+        TF_VAR_location = 'eastus'
+        TF_VAR_vm_admin_username = 'azureuser'
+        TF_VAR_gogs_db_name = 'gogsdb'
+        TF_VAR_gogs_db_user = 'gogsadmin'
+        TF_VAR_gogs_db_password = 'MySuperSecretP@ssword123'
     }
 
     stages {
         stage('Preparar credenciales Azure') {
             steps {
-                script {
-                    withCredentials([string(credentialsId: 'jenkins-azure', variable: 'AZURE_CREDENTIALS')]) {
-                        writeFile file: 'azure_creds.json', text: AZURE_CREDENTIALS
-                        def json = readJSON file: 'azure_creds.json'
-
-                        env.ARM_CLIENT_ID = json.clientId
-                        env.ARM_CLIENT_SECRET = json.clientSecret
-                        env.ARM_SUBSCRIPTION_ID = json.subscriptionId
-                        env.ARM_TENANT_ID = json.tenantId
-
-                        echo "Credenciales de Azure cargadas correctamente"
+                withCredentials([azureServicePrincipal('AZURE_CREDENTIALS')]) {
+                    script {
+                        writeFile file: 'azure_creds.json', text: "${AZURE_CREDENTIALS}"
+                        sh '''
+                            export ARM_CLIENT_ID=$(jq -r '.clientId' azure_creds.json)
+                            export ARM_CLIENT_SECRET=$(jq -r '.clientSecret' azure_creds.json)
+                            export ARM_SUBSCRIPTION_ID=$(jq -r '.subscriptionId' azure_creds.json)
+                            export ARM_TENANT_ID=$(jq -r '.tenantId' azure_creds.json)
+                            echo "Credenciales exportadas para Terraform."
+                        '''
                     }
                 }
             }
@@ -33,15 +37,22 @@ pipeline {
 
         stage('Provisionar con Ansible') {
             steps {
-                sh 'ansible-playbook -i hosts playbook.yml'
+                sh 'ansible-playbook -i inventory.ini playbook.yml'
             }
         }
     }
 
     post {
         always {
-            node {
-                sh 'rm -f azure_creds.json'
+            node('master') {
+                sh '''
+                    if [ -f azure_creds.json ]; then
+                        rm azure_creds.json
+                        echo "Archivo azure_creds.json eliminado."
+                    else
+                        echo "No se encontró azure_creds.json, nada que eliminar."
+                    fi
+                '''
             }
         }
     }
