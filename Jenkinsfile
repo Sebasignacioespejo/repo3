@@ -46,16 +46,16 @@ pipeline {
     }
 
     post {
-        always {
-            node('any') { // Aquí agregamos el parámetro 'label'
-                sh '''
-                    if [ -f azure_creds.json ]; then
-                        rm azure_creds.json
-                        echo "Archivo azure_creds.json eliminado."
-                    else
-                        echo "No se encontró azure_creds.json, nada que eliminar."
-                    fi
-                '''
+    always {
+        node {
+            sh '''
+                if [ -f azure_creds.json ]; then
+                    rm azure_creds.json
+                    echo "Archivo azure_creds.json eliminado."
+                else
+                    echo "No se encontró azure_creds.json, nada que eliminar."
+                fi
+            '''
             }
         }
     }
