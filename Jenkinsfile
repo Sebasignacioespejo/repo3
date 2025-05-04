@@ -47,7 +47,7 @@ pipeline {
 
     post {
         always {
-            node {
+            node('principal') { // Aquí le indicas un nodo, por ejemplo 'master'
                 sh '''
                     if [ -f azure_creds.json ]; then
                         rm azure_creds.json
