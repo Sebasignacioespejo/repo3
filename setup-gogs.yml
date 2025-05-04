@@ -1,0 +1,78 @@
+---
+- name: Instalar y configurar Gogs
+  hosts: gogs
+  become: yes
+
+  vars:
+    gogs_version: "0.13.0"
+    gogs_user: "git"
+    gogs_install_dir: "/home/git/gogs"
+
+  tasks:
+    - name: Instalar paquetes necesarios
+      apt:
+        name:
+          - git
+          - wget
+          - sqlite3
+        update_cache: yes
+
+    - name: Crear usuario git si no existe
+      user:
+        name: "{{ gogs_user }}"
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Crear directorio de instalación de Gogs
+      file:
+        path: "{{ gogs_install_dir }}"
+        state: directory
+        owner: "{{ gogs_user }}"
+        group: "{{ gogs_user }}"
+        mode: '0755'
+
+    - name: Descargar Gogs
+      become_user: "{{ gogs_user }}"
+      get_url:
+        url: "https://dl.gogs.io/{{ gogs_version }}/gogs_{{ gogs_version }}_linux_amd64.tar.gz"
+        dest: "/home/{{ gogs_user }}/gogs.tar.gz"
+
+    - name: Extraer Gogs
+      become_user: "{{ gogs_user }}"
+      unarchive:
+        src: "/home/{{ gogs_user }}/gogs.tar.gz"
+        dest: "/home/{{ gogs_user }}/"
+        remote_src: yes
+
+    - name: Crear servicio systemd para Gogs
+      copy:
+        dest: /etc/systemd/system/gogs.service
+        content: |
+          [Unit]
+          Description=Gogs
+          After=network.target
+
+          [Service]
+          Type=simple
+          User={{ gogs_user }}
+          Group={{ gogs_user }}
+          WorkingDirectory={{ gogs_install_dir }}
+          ExecStart={{ gogs_install_dir }}/gogs web
+          Restart=always
+          Environment=USER={{ gogs_user }} HOME=/home/{{ gogs_user }}
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Restart Gogs
+
+    - name: Habilitar Gogs para que arranque al iniciar
+      systemd:
+        name: gogs
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Restart Gogs
+      systemd:
+        name: gogs
+        state: restarted
