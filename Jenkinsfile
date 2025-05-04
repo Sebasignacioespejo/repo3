@@ -42,17 +42,16 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            node {
-                sh '''
-                    if [ -f azure_creds.json ]; then
-                        rm azure_creds.json
-                        echo "Archivo azure_creds.json eliminado."
-                    else
-                        echo "No se encontró azure_creds.json, nada que eliminar."
-                    fi
-                '''
+  post {
+    always {
+        sh '''
+            if [ -f azure_creds.json ]; then
+                rm azure_creds.json
+                echo "Archivo azure_creds.json eliminado."
+            else
+                echo "No se encontró azure_creds.json, nada que eliminar."
+            fi
+        '''
             }
         }
     }
