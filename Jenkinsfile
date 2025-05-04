@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        AZURE_CREDENTIALS = credentials('azure-credentials')  // Usamos el ID de las credenciales que creaste
+        AZURE_CREDENTIALS = credentials('jenkins-azure')  // Usamos el ID de las credenciales que creaste
     }
     
     stages {
